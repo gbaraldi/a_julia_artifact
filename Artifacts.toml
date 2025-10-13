@@ -1,0 +1,25 @@
+[[JuliaNoGPL]]
+arch = "x86_64"
+git-tree-sha1 = "c4045a5a70590ce5a0ebf043584f9f370f5fdf58"
+libc = "glibc"
+os = "linux"
+
+    [[JuliaNoGPL.download]]
+    sha256 = "5bafcd1fecd3ddd376dff3a3212dcc0cd4febc1bf325bf4fbf8ed4e1300529a8"
+    url = "https://github.com/gbaraldi/a_julia_artifact/releases/download/julia-1.12-nogpl/julia-cde8038cc4-linux-x86_64.tar.gz"
+[[JuliaNoGPL]]
+arch = "aarch64"
+git-tree-sha1 = "f16b80398074a91f42c28472fff8ddf373c03543"
+os = "macos"
+
+    [[JuliaNoGPL.download]]
+    sha256 = "1ccb492f51f2e22b78651f96f446fd55c78eefb4e4fd335e820435ee7c54f431"
+    url = "https://github.com/gbaraldi/a_julia_artifact/releases/download/julia-1.12-nogpl/julia-cde8038cc4-macos-aarch64.tar.gz"
+[[JuliaNoGPL]]
+arch = "x86_64"
+git-tree-sha1 = "4b51c9c020242ae3638817a60735c2be153cdfd8"
+os = "windows"
+
+    [[JuliaNoGPL.download]]
+    sha256 = "54032387f17970758fbd2128b9053e590fb55373c551df2f018c24cb49760947"
+    url = "https://github.com/gbaraldi/a_julia_artifact/releases/download/julia-1.12-nogpl/julia-cde8038cc4-windows-x86_64.tar.gz"
