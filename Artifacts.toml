@@ -1,25 +1,25 @@
 [[JuliaNoGPL]]
 arch = "x86_64"
-git-tree-sha1 = "37c172680f4eeaa0b52f96dfeb4cea3a5979124f"
+git-tree-sha1 = "97d74c3b735ed4bd3962c7db274963a83cf12a00"
 libc = "glibc"
 os = "linux"
 
     [[JuliaNoGPL.download]]
-    sha256 = "c9f12e81124b73a37258ada7899e5a73846e6e10747f6d6b85200f65e7ee3ab0"
+    sha256 = "b26d8dd61268e3220feabba14426644348405dd904fa2d4dca92b87f079bcb5d"
     url = "https://github.com/gbaraldi/a_julia_artifact/releases/download/julia-1.12-nogpl-1/julia-cdaa753cd7-linux-x86_64-stripped.tar.gz"
 [[JuliaNoGPL]]
 arch = "aarch64"
-git-tree-sha1 = "a8251653e9467eb320f4a58c592ef49e6b0ead6e"
+git-tree-sha1 = "22ddf6f5fa49255a54400173de5a4e46981ae8d0"
 os = "macos"
 
     [[JuliaNoGPL.download]]
-    sha256 = "982f6f71a6633a314aa27fa58f77661109fbfc28555067761251306e1e23801d"
+    sha256 = "f2afe16d3d5403dcdb62d6a49e8eaae81135c060aace192cc1e3f19b53c49260"
     url = "https://github.com/gbaraldi/a_julia_artifact/releases/download/julia-1.12-nogpl-1/julia-cdaa753cd7-macos-aarch64-stripped.tar.gz"
 [[JuliaNoGPL]]
 arch = "x86_64"
-git-tree-sha1 = "f43a14cad27ffa703fc74ff937bc69440be791e9"
+git-tree-sha1 = "41e2f6014dfeff034d4d74d64f0be49e54710b38"
 os = "windows"
 
     [[JuliaNoGPL.download]]
-    sha256 = "a124f03af4fef4b56a49d73ae61db958d97c8665d2e8e9b07776bf6a88bef19a"
+    sha256 = "33a44a5bc476a1f835b7821145a36b6799ddc71e91bafcd1c8731ee09ebc6fca"
     url = "https://github.com/gbaraldi/a_julia_artifact/releases/download/julia-1.12-nogpl-1/julia-cdaa753cd7-windows-x86_64-stripped.tar.gz"

@@ -28,14 +28,10 @@ function verify_tarball(tar_gz::AbstractString; verbose::Bool=true, keep_tests_f
             end
         end
 
-        # 1) Ensure tests are gone, except for keep_tests_for
+        # 1) Ensure stdlib tests are gone, except for keep_tests_for. Base tests are allowed.
         tests_ok = true
         remaining_tests = String[]
-        base_tests = joinpath(root_dir, "share", "julia", "test")
-        if ispath(base_tests)
-            push!(remaining_tests, base_tests)
-            tests_ok = false
-        end
+        # allow base tests under share/julia/test
         stdlib_root = joinpath(root_dir, "share", "julia", "stdlib")
         if isdir(stdlib_root)
             for vdir in readdir(stdlib_root)

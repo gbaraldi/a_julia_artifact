@@ -56,13 +56,7 @@ end
 
 function delete_bundled_tests!(root_dir::AbstractString; verbose::Bool=false, keep_tests_for::Set{String}=Set(["REPL"]))
     deleted = String[]
-    # Remove top-level Base tests
-    base_tests = joinpath(root_dir, "share", "julia", "test")
-    if ispath(base_tests)
-        rm(base_tests; recursive=true, force=true)
-        push!(deleted, base_tests)
-        verbose && println("Removed: ", base_tests)
-    end
+    # Keep top-level Base tests (`share/julia/test`) by default
     # Remove stdlib tests
     stdlib_root = joinpath(root_dir, "share", "julia", "stdlib")
     if isdir(stdlib_root)
