@@ -2,15 +2,33 @@ using Printf
 
 include(joinpath(@__DIR__, "strip.jl"))
 
-function verify_tarball(tar_gz::AbstractString; verbose::Bool=true)
+function verify_tarball(tar_gz::AbstractString; verbose::Bool=true, keep_tests_for::Set{String}=Set(["REPL"]))
     mktempdir() do td
         verbose && println("Extracting: ", tar_gz)
-        run(`tar -xzf $(abspath(tar_gz)) -C $(td)`)         
+        withenv("COPYFILE_DISABLE" => "1") do
+            run(`tar --disable-copyfile -xzf $(abspath(tar_gz)) -C $(td)`)         
+        end
         # Find root
         entries = filter(name -> name != "." && name != "..", readdir(td))
         root_dir = length(entries) == 1 ? joinpath(td, entries[1]) : td
 
-        # 1) Ensure tests are gone
+        # 0) Ensure no macOS dotfiles
+        dotfiles_ok = true
+        dot_offenders = String[]
+        if ispath(joinpath(root_dir, "__MACOSX"))
+            dotfiles_ok = false
+            push!(dot_offenders, joinpath(root_dir, "__MACOSX"))
+        end
+        for (dirpath, _, filenames) in walkdir(root_dir)
+            for f in filenames
+                if startswith(f, "._") || f == ".DS_Store"
+                    dotfiles_ok = false
+                    push!(dot_offenders, joinpath(dirpath, f))
+                end
+            end
+        end
+
+        # 1) Ensure tests are gone, except for keep_tests_for
         tests_ok = true
         remaining_tests = String[]
         base_tests = joinpath(root_dir, "share", "julia", "test")
@@ -24,6 +42,15 @@ function verify_tarball(tar_gz::AbstractString; verbose::Bool=true)
                 vpath = joinpath(stdlib_root, vdir)
                 isdir(vpath) || continue
                 for pkg in readdir(vpath)
+                    if pkg in keep_tests_for
+                        # ensure present
+                        testdir = joinpath(vpath, pkg, "test")
+                        if !ispath(testdir)
+                            tests_ok = false
+                            push!(remaining_tests, "MISSING: " * testdir)
+                        end
+                        continue
+                    end
                     testdir = joinpath(vpath, pkg, "test")
                     if ispath(testdir)
                         push!(remaining_tests, testdir)
@@ -79,10 +106,16 @@ function verify_tarball(tar_gz::AbstractString; verbose::Bool=true)
             end
         end
 
-        verbose && println(@sprintf("Tests removed: %s", tests_ok ? "yes" : "NO"))
+        verbose && println(@sprintf("No macOS dotfiles: %s", dotfiles_ok ? "yes" : "NO"))
+        if !dotfiles_ok && verbose
+            for d in dot_offenders
+                println("  offending: ", d)
+            end
+        end
+        verbose && println(@sprintf("Tests removed (except keep list): %s", tests_ok ? "yes" : "NO"))
         if !tests_ok && verbose
             for t in remaining_tests
-                println("  still present: ", t)
+                println("  test issue: ", t)
             end
         end
         verbose && println(@sprintf("No test-compiled native libs left: %s", cb_ok ? "yes" : "NO"))
@@ -97,7 +130,7 @@ function verify_tarball(tar_gz::AbstractString; verbose::Bool=true)
                 println("  offending .ji: ", j)
             end
         end
-        return (tests_ok=tests_ok, cb_ok=cb_ok, ji_ok=ji_ok, offenders=offenders, remaining_tests=remaining_tests, bad_ji=bad_ji)
+        return (dotfiles_ok=dotfiles_ok, tests_ok=tests_ok, cb_ok=cb_ok, ji_ok=ji_ok, offenders=offenders, remaining_tests=remaining_tests, bad_ji=bad_ji)
     end
 end
 
@@ -108,7 +141,7 @@ if abspath(PROGRAM_FILE) == @__FILE__
     end
     path = ARGS[1]
     res = verify_tarball(path; verbose=true)
-    if res.tests_ok && res.cb_ok && res.ji_ok
+    if res.dotfiles_ok && res.tests_ok && res.cb_ok && res.ji_ok
         println("OK")
     else
         println("FAILED")

@@ -11,6 +11,34 @@ function find_root_directory(extract_dir::AbstractString)
     end
 end
 
+function remove_macos_dotfiles!(root_dir::AbstractString; verbose::Bool=false)
+    removed = String[]
+    if ispath(joinpath(root_dir, "__MACOSX"))
+        rm(joinpath(root_dir, "__MACOSX"); recursive=true, force=true)
+        push!(removed, joinpath(root_dir, "__MACOSX"))
+        verbose && println("Removed: ", joinpath(root_dir, "__MACOSX"))
+    end
+    for (dirpath, dirnames, filenames) in walkdir(root_dir)
+        for f in filenames
+            if startswith(f, "._") || f == ".DS_Store"
+                fp = joinpath(dirpath, f)
+                rm(fp; force=true)
+                push!(removed, fp)
+                verbose && println("Removed: ", fp)
+            end
+        end
+        for d in dirnames
+            if d == "__MACOSX"
+                dp = joinpath(dirpath, d)
+                rm(dp; recursive=true, force=true)
+                push!(removed, dp)
+                verbose && println("Removed: ", dp)
+            end
+        end
+    end
+    return removed
+end
+
 function list_stdlib_names(root_dir::AbstractString)
     stdlib_root = joinpath(root_dir, "share", "julia", "stdlib")
     if !isdir(stdlib_root)
@@ -26,7 +54,7 @@ function list_stdlib_names(root_dir::AbstractString)
     return Set(names)
 end
 
-function delete_bundled_tests!(root_dir::AbstractString; verbose::Bool=false)
+function delete_bundled_tests!(root_dir::AbstractString; verbose::Bool=false, keep_tests_for::Set{String}=Set(["REPL"]))
     deleted = String[]
     # Remove top-level Base tests
     base_tests = joinpath(root_dir, "share", "julia", "test")
@@ -42,6 +70,9 @@ function delete_bundled_tests!(root_dir::AbstractString; verbose::Bool=false)
             vpath = joinpath(stdlib_root, vdir)
             isdir(vpath) || continue
             for pkg in readdir(vpath)
+                if pkg in keep_tests_for
+                    continue
+                end
                 testdir = joinpath(vpath, pkg, "test")
                 if ispath(testdir)
                     rm(testdir; recursive=true, force=true)
@@ -145,12 +176,15 @@ function strip_tarball(in_tar_gz::AbstractString; out_tar_gz::Union{Nothing,Abst
         if verbose
             println("Extracting tarball: ", in_tar_gz)
         end
-        # Use system tar to avoid CodecZlib dependency
-        run(`tar -xzf $(abspath(in_tar_gz)) -C $(td)`)         
+        # Use system tar and disable macOS copyfile metadata
+        withenv("COPYFILE_DISABLE" => "1") do
+            run(`tar --disable-copyfile -xzf $(abspath(in_tar_gz)) -C $(td)`)         
+        end
 
         root_dir = find_root_directory(td)
         verbose && println("Root: ", root_dir)
 
+        remove_macos_dotfiles!(root_dir; verbose)
         delete_bundled_tests!(root_dir; verbose)
         # Remove native libs compiled with checkbounds=1 first, then remove the .ji packageimages themselves
         remove_test_compiled_libs!(root_dir; verbose)
@@ -159,10 +193,12 @@ function strip_tarball(in_tar_gz::AbstractString; out_tar_gz::Union{Nothing,Abst
         if verbose
             println("Repacking into: ", out_tar_gz)
         end
-        # Pack the top-level root directory back into a .tar.gz
+        # Pack the top-level root directory back into a .tar.gz, disabling macOS metadata
         parent = dirname(root_dir)
         base = basename(root_dir)
-        run(`tar -czf $(abspath(out_tar_gz)) -C $(parent) $(base)`) 
+        withenv("COPYFILE_DISABLE" => "1") do
+            run(`tar --disable-copyfile -czf $(abspath(out_tar_gz)) -C $(parent) $(base)`) 
+        end
     end
     return out_tar_gz
 end
@@ -172,6 +208,7 @@ function strip_tree(root_dir::AbstractString; verbose::Bool=true)
         error("Not a directory: " * root_dir)
     end
     verbose && println("Stripping in place: ", root_dir)
+    remove_macos_dotfiles!(root_dir; verbose)
     delete_bundled_tests!(root_dir; verbose)
     remove_test_compiled_libs!(root_dir; verbose)
     remove_checkbounds_ji!(root_dir; verbose)
@@ -193,5 +230,4 @@ if abspath(PROGRAM_FILE) == @__FILE__
         println("Stripped: ", res)
     end
 end
-
 
